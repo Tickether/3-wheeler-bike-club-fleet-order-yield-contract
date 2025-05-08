@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import { ERC6909 } from "solmate/tokens/ERC6909.sol";
+//import { ERC6909 } from  "https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC6909.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 //import { Ownable } from "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
@@ -24,7 +26,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 
 
-abstract contract FleetOrderYield is Ownable, Pausable, ReentrancyGuard {
+abstract contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Emitted when the yield token is set
@@ -46,7 +48,7 @@ abstract contract FleetOrderYield is Ownable, Pausable, ReentrancyGuard {
     function setYieldToken(address _yieldToken) external onlyOwner {
         if (_yieldToken == address(0)) revert InvalidTokenAddress();
         if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
-        
+
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
     }
