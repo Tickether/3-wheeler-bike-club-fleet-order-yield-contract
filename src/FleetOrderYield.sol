@@ -26,7 +26,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 
 
-abstract contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
+contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Emitted when the yield token is set
@@ -52,7 +52,5 @@ abstract contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
     }
-    
-    
-    
+
 }
