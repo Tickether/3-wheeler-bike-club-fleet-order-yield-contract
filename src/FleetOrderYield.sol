@@ -27,5 +27,30 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 abstract contract FleetOrderYield is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable yieldToken;
+    /// @notice Emitted when the yield token is set
+    event YieldTokenSet(address indexed newYieldToken);
+
+
+
+    /// @notice Thrown when the token address is invalid
+    error InvalidTokenAddress();
+    /// @notice Thrown when the token address is already set
+    error TokenAlreadySet();
+
+
+
+    constructor() Ownable(msg.sender) { }
+    
+    IERC20 public yieldToken;
+
+    function setYieldToken(address _yieldToken) external onlyOwner {
+        if (_yieldToken == address(0)) revert InvalidTokenAddress();
+        if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
+        
+        yieldToken = IERC20(_yieldToken);
+        emit YieldTokenSet(_yieldToken);
+    }
+    
+    
+    
 }
