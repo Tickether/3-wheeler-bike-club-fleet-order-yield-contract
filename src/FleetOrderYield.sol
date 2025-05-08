@@ -38,6 +38,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     error InvalidTokenAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
+    /// @notice Thrown when the amount is invalid
+    error InvalidAmount();
 
 
 
@@ -51,6 +53,16 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
+    }
+
+    function deposit(uint256 amount, uint256 id) external nonReentrant {
+        if (amount == 0) revert InvalidAmount();
+
+        uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
+
+        uint256 interest = amount * 10 ** decimals;
+
+        yieldToken.safeTransferFrom(msg.sender, address(this), interest);
     }
 
 }
