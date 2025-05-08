@@ -24,6 +24,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 
 
-abstract contract FleetOrderYield is Ownable {
+abstract contract FleetOrderYield is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    IERC20 public immutable yieldToken;
 }
