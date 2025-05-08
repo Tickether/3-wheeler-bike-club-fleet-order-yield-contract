@@ -27,6 +27,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 
 contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
+     constructor() Ownable(msg.sender) {}
+
     using SafeERC20 for IERC20;
 
     /// @notice Emitted when the yield token is set
@@ -38,15 +40,17 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     error InvalidTokenAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
-    /// @notice Thrown when the amount is invalid
-    error InvalidAmount();
 
-    /// @notice Total interest deposited for a token representing a 3-wheeler.
-    mapping(uint256 => uint256) public totalInterestDeposited;
-    /// @notice Total interest withdrawn for a token representing a 3-wheeler.
-    mapping(uint256 => uint256) public totalInterestWithdrawn;
 
-    constructor() Ownable(msg.sender) { }
+    /// @notice weekly interest for a fleet in USD.
+    uint256 public fleetWeeklyInterest;
+
+
+
+    /// @notice Total interest distributed for a token representing a 3-wheeler.
+    mapping(uint256 => uint256) public totalInterestDistributed;
+
+   
     
     IERC20 public yieldToken;
 
@@ -58,6 +62,15 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         emit YieldTokenSet(_yieldToken);
     }
 
+    function distributeInterest(uint256 id, address[] calldata to) external nonReentrant {
+        uint256 interest = totalInterestDistributed[id];
+
+        for (uint256 i = 0; i < to.length; i++) {
+            yieldToken.safeTransfer(to[i], interest);
+        }
+    }
+
+/*
     function deposit(uint256 amount, uint256 id) external nonReentrant {
         if (amount == 0) revert InvalidAmount();
 
@@ -73,5 +86,6 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     function withdraw(uint256 id) external nonReentrant {
         totalInterestWithdrawn[id] += 0;
     }
+*/
 
 }
