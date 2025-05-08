@@ -41,7 +41,9 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Thrown when the amount is invalid
     error InvalidAmount();
 
-
+    /// @notice Total interest deposited for a token representing a 3-wheeler.
+    mapping(uint256 => uint256) public totalInterestDeposited;
+    
 
     constructor() Ownable(msg.sender) { }
     
@@ -63,6 +65,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         uint256 interest = amount * 10 ** decimals;
 
         yieldToken.safeTransferFrom(msg.sender, address(this), interest);
+
+        totalInterestDeposited[id] += interest;
     }
 
 }
