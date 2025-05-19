@@ -27,7 +27,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 
 contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
-     constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {}
 
     using SafeERC20 for IERC20;
 
@@ -35,6 +35,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     event YieldTokenSet(address indexed newYieldToken);
     /// @notice Emitted when the fleet weekly interest is updated
     event FleetWeeklyInterestUpdated(uint256 indexed newFleetWeeklyInterest);
+    /// @notice Emitted when the interest is distributed
+    event InterestDistributed(uint256 indexed id, address indexed to, uint256 week);
 
 
     /// @notice Thrown when the token address is invalid
@@ -44,18 +46,19 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
 
+    /// @notice The fleet order book contract
+    IFleetOrderBook public fleetOrderBookContract;
+    /// @notice The yield token for the fleet order yield contract.
+    IERC20 public yieldToken;
 
     /// @notice weekly interest for a fleet in USD.
     uint256 public fleetWeeklyInterest;
-
+    
 
 
 
     /// @notice Total interest distributed for a token representing a 3-wheeler.
     mapping(uint256 => uint256) public totalInterestDistributed;
-
-    /// @notice The yield token for the fleet order yield contract.
-    IERC20 public yieldToken;
 
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
@@ -84,7 +87,7 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         // Cache fleetFractionPrice in memory
         uint256 price = fleetWeeklyInterest;
         
-        uint256 amount = price * fractions * (10 ** decimals);
+        uint256 amount = (price * (fractions/fleetOrderBookContract.MAX_FLEET_FRACTION())) * (10 ** decimals);
         if (tokenContract.balanceOf(msg.sender) < amount) revert NotEnoughTokens();
         tokenContract.safeTransferFrom(msg.sender, address(this), amount);
     }
@@ -92,11 +95,13 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Distribute the interest to the addresses.
     /// @param id The id of the fleet order.
     /// @param to The addresses to distribute the interest to.
-    function distributeInterest(uint256 id, address[] calldata to) external nonReentrant {
-        uint256 interest = totalInterestDistributed[id];
+    /// @param week The number of weeks to distribute the interest for.
+    function distributeInterest(uint256 id, address[] calldata to, uint256 week) external nonReentrant {
 
         for (uint256 i = 0; i < to.length; i++) {
-            yieldToken.safeTransfer(to[i], interest);
+            uint256 fractions = fleetOrderBookContract.balanceOf(id, to[i]);
+            distributeERC20(fractions, to[i]);
+            emit InterestDistributed(id, to[i], week);
         }
     }
 

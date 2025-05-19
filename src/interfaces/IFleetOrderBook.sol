@@ -6,6 +6,10 @@ pragma solidity ^0.8.13;
 /// @author Geeloko
 
 interface IFleetOrderBook {
+
+    /// @notice Get the balance of a fleet order
+    function balanceOf(uint256 id, address owner) external view returns (uint256);
+
     /// @notice Get the total number of fleet orders
     function totalFleet() external view returns (uint256);
 
