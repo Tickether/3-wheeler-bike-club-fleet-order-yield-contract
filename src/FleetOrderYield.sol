@@ -52,10 +52,11 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Total interest distributed for a token representing a 3-wheeler.
     mapping(uint256 => uint256) public totalInterestDistributed;
 
-   
-    
+    /// @notice The yield token for the fleet order yield contract.
     IERC20 public yieldToken;
 
+    /// @notice Set the yield token for the fleet order yield contract.
+    /// @param _yieldToken The address of the yield token.
     function setYieldToken(address _yieldToken) external onlyOwner {
         if (_yieldToken == address(0)) revert InvalidTokenAddress();
         if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
@@ -64,11 +65,16 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         emit YieldTokenSet(_yieldToken);
     }
 
+    /// @notice Set the fleet weekly interest for the fleet order yield contract.
+    /// @param _fleetWeeklyInterest The new fleet weekly interest.
     function setFleetWeeklyInterest(uint256 _fleetWeeklyInterest) external onlyOwner {
         fleetWeeklyInterest = _fleetWeeklyInterest;
         emit FleetWeeklyInterestUpdated(_fleetWeeklyInterest);
     }
 
+    /// @notice Distribute the interest to the addresses.
+    /// @param id The id of the fleet order.
+    /// @param to The addresses to distribute the interest to.
     function distributeInterest(uint256 id, address[] calldata to) external nonReentrant {
         uint256 interest = totalInterestDistributed[id];
 
