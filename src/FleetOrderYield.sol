@@ -33,7 +33,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
-
+    /// @notice Emitted when the fleet weekly interest is updated
+    event FleetWeeklyInterestUpdated(uint256 indexed newFleetWeeklyInterest);
 
 
     /// @notice Thrown when the token address is invalid
@@ -44,6 +45,7 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice weekly interest for a fleet in USD.
     uint256 public fleetWeeklyInterest;
+
 
 
 
@@ -60,6 +62,11 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
+    }
+
+    function setFleetWeeklyInterest(uint256 _fleetWeeklyInterest) external onlyOwner {
+        fleetWeeklyInterest = _fleetWeeklyInterest;
+        emit FleetWeeklyInterestUpdated(_fleetWeeklyInterest);
     }
 
     function distributeInterest(uint256 id, address[] calldata to) external nonReentrant {
