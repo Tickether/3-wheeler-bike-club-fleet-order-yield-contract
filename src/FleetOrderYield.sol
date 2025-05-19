@@ -41,6 +41,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     error InvalidTokenAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
+    /// @notice Thrown when the user does not have enough tokens
+    error NotEnoughTokens();
 
 
     /// @notice weekly interest for a fleet in USD.
@@ -72,6 +74,21 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         emit FleetWeeklyInterestUpdated(_fleetWeeklyInterest);
     }
 
+    /// @notice Pay fee in ERC20.
+    /// @param fractions The number of fractions to order.
+    /// @param erc20Contract The address of the ERC20 contract.
+    function distributeERC20(uint256 fractions, address erc20Contract) internal {
+        IERC20 tokenContract = IERC20(erc20Contract);
+        uint256 decimals = IERC20Metadata(erc20Contract).decimals();
+        
+        // Cache fleetFractionPrice in memory
+        uint256 price = fleetWeeklyInterest;
+        
+        uint256 amount = price * fractions * (10 ** decimals);
+        if (tokenContract.balanceOf(msg.sender) < amount) revert NotEnoughTokens();
+        tokenContract.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
     /// @notice Distribute the interest to the addresses.
     /// @param id The id of the fleet order.
     /// @param to The addresses to distribute the interest to.
@@ -83,22 +100,5 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         }
     }
 
-/*
-    function deposit(uint256 amount, uint256 id) external nonReentrant {
-        if (amount == 0) revert InvalidAmount();
-
-        uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
-
-        uint256 interest = amount * 10 ** decimals;
-
-        yieldToken.safeTransferFrom(msg.sender, address(this), interest);
-
-        totalInterestDeposited[id] += interest;
-    }
-
-    function withdraw(uint256 id) external nonReentrant {
-        totalInterestWithdrawn[id] += 0;
-    }
-*/
 
 }
