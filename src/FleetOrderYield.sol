@@ -99,7 +99,12 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     function distributeInterest(uint256 id, address[] calldata to, uint256 week) external nonReentrant {
 
         for (uint256 i = 0; i < to.length; i++) {
-            uint256 fractions = fleetOrderBookContract.balanceOf(id, to[i]);
+            uint256 fractions;
+            if (fleetOrderBookContract.fleetFractioned(id)) {
+                fractions = fleetOrderBookContract.balanceOf(id, to[i]);
+            } else {
+                fractions = fleetOrderBookContract.MAX_FLEET_FRACTION();
+            }
             distributeERC20(fractions, to[i]);
             emit InterestDistributed(id, to[i], week);
         }
