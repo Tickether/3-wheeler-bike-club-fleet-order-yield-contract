@@ -29,12 +29,16 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     constructor() Ownable(msg.sender) {}
 
+
     using SafeERC20 for IERC20;
+
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
     /// @notice Emitted when the fleet weekly interest is updated
     event FleetWeeklyInterestUpdated(uint256 indexed newFleetWeeklyInterest);
+    /// @notice Emitted when the number of weeks to distribute the interest is set
+    event WeeksToDistributeSet(uint256 indexed newWeeksToDistribute);
     /// @notice Emitted when the interest is distributed
     event InterestDistributed(uint256 indexed id, address indexed to, uint256 week);
 
@@ -46,19 +50,23 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
 
+
     /// @notice The fleet order book contract
     IFleetOrderBook public fleetOrderBookContract;
     /// @notice The yield token for the fleet order yield contract.
     IERC20 public yieldToken;
-
-    /// @notice weekly interest for a fleet in USD.
-    uint256 public fleetWeeklyInterest;
     
 
+    /// @notice The number of weeks to distribute the interest for.
+    uint256 public weeksToDistribute;
+    /// @notice weekly interest for a fleet in USD.
+    uint256 public fleetWeeklyInterest;
 
 
     /// @notice Total interest distributed for a token representing a 3-wheeler.
     mapping(uint256 => uint256) public totalInterestDistributed;
+
+
 
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
@@ -68,6 +76,13 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
+    }
+
+    /// @notice Set the number of weeks to distribute the interest for.
+    /// @param _weeksToDistribute The new number of weeks to distribute the interest for.
+    function setWeeksToDistribute(uint256 _weeksToDistribute) external onlyOwner {
+        weeksToDistribute = _weeksToDistribute;
+        emit WeeksToDistributeSet(_weeksToDistribute);
     }
 
     /// @notice Set the fleet weekly interest for the fleet order yield contract.
