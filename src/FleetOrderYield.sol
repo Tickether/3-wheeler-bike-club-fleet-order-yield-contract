@@ -35,6 +35,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
+    /// @notice Event emitted when fleet sales are withdrawn.
+    event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
     
 
 
@@ -44,6 +46,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     error TokenAlreadySet();
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
+    /// @notice Thrown when the native token is not accepted
+     error NoNativeTokenAccepted();
 
 
     /// @notice The fleet order book contract
@@ -76,6 +80,23 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
         if (tokenContract.balanceOf(msg.sender) < amount) revert NotEnoughTokens();
         tokenContract.safeTransferFrom(msg.sender, address(this), amount);
     }
+
+
+    /// @notice Withdraw sales from fleet order book.
+    /// @param token The address of the ERC20 contract.
+    /// @param to The address to send the sales to.
+    function withdrawFleetManagementServiceFee(address token, address to) external nonReentrant {
+        if (token == address(0)) revert InvalidTokenAddress();
+        IERC20 tokenContract = IERC20(token);
+        uint256 amount = tokenContract.balanceOf(address(this));
+        if (amount == 0) revert NotEnoughTokens();
+        tokenContract.safeTransfer(to, amount);
+        emit FleetManagementServiceFeeWithdrawn(token, to, amount);
+    }
+
+
+    receive() external payable { revert NoNativeTokenAccepted(); }
+    fallback() external payable { revert NoNativeTokenAccepted(); }
 
 
 
