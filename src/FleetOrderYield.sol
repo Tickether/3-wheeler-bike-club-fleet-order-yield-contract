@@ -65,11 +65,12 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     event YieldTokenSet(address indexed newYieldToken);
     /// @notice Event emitted when fleet sales are withdrawn.
     event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
-    
+    /// @notice Event emitted when the fleet management service fee wallet is set
+    event FleetManagementServiceFeeWalletSet(address indexed newFleetManagementServiceFeeWallet);
 
 
     /// @notice Thrown when the token address is invalid
-    error InvalidTokenAddress();
+    error InvalidAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
     /// @notice Thrown when the user does not have enough tokens
@@ -82,6 +83,8 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     IFleetOrderBook public fleetOrderBookContract;
     /// @notice The yield token for the fleet order yield contract.
     IERC20 public yieldToken;
+    /// @notice The fleet management service fee wallet for the fleet order yield contract.
+    address public fleetManagementServiceFeeWallet;
     
 
    
@@ -89,11 +92,19 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
     function setYieldToken(address _yieldToken) external onlyRole(SUPER_ADMIN_ROLE) {
-        if (_yieldToken == address(0)) revert InvalidTokenAddress();
+        if (_yieldToken == address(0)) revert InvalidAddress();
         if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
 
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
+    }
+
+    /// @notice Set the fleet management service fee wallet for the fleet order yield contract.
+    /// @param _fleetManagementServiceFeeWallet The address of the fleet management service fee wallet.
+    function setFleetManagementServiceFeeWallet(address _fleetManagementServiceFeeWallet) external onlyRole(SUPER_ADMIN_ROLE) {
+       if (_fleetManagementServiceFeeWallet == address(0)) revert InvalidAddress();
+        fleetManagementServiceFeeWallet = _fleetManagementServiceFeeWallet;
+        emit FleetManagementServiceFeeWalletSet(_fleetManagementServiceFeeWallet);
     }
 
 
@@ -114,7 +125,7 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     /// @param token The address of the ERC20 contract.
     /// @param to The address to send the sales to.
     function withdrawFleetManagementServiceFee(address token, address to) external nonReentrant {
-        if (token == address(0)) revert InvalidTokenAddress();
+        if (token == address(0)) revert InvalidAddress();
         IERC20 tokenContract = IERC20(token);
         uint256 amount = tokenContract.balanceOf(address(this));
         if (amount == 0) revert NotEnoughTokens();
