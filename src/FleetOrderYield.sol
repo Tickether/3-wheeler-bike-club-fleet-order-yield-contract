@@ -36,8 +36,8 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
     
-    
-      
+
+
     /// @notice Thrown when the token address is invalid
     error InvalidTokenAddress();
     /// @notice Thrown when the token address is already set
@@ -54,8 +54,6 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
    
 
-
-
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
     function setYieldToken(address _yieldToken) external onlyOwner {
@@ -64,6 +62,19 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
         yieldToken = IERC20(_yieldToken);
         emit YieldTokenSet(_yieldToken);
+    }
+
+
+
+    /// @notice Pay fee in ERC20.
+    /// @param erc20Contract The address of the ERC20 contract.
+    function payFleetWeeklyInstallmentERC20( address erc20Contract) internal {
+        IERC20 tokenContract = IERC20(erc20Contract);
+        uint256 decimals = IERC20Metadata(erc20Contract).decimals();
+        
+        uint256 amount = 1 * (10 ** decimals);
+        if (tokenContract.balanceOf(msg.sender) < amount) revert NotEnoughTokens();
+        tokenContract.safeTransferFrom(msg.sender, address(this), amount);
     }
 
 
