@@ -15,22 +15,50 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @dev OpenZeppelin access imports
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 
 /// @title 3wb.club fleet order yield V1.0
 /// @notice Manages yield for fractional and full investments in 3-wheelers
-/// @author Geeloko
+/// @author geeloko.eth
+/// 
+/// @dev Role-based Access Control System:
+/// - DEFAULT_ADMIN_ROLE: Can grant/revoke all other roles, highest privilege
+/// - SUPER_ADMIN_ROLE: Can pause/unpause, set prices, max orders, add/remove ERC20s, update fleet status
+/// - COMPLIANCE_ROLE: Can set compliance status for users
+/// - WITHDRAWAL_ROLE: Can withdraw sales from the contract
+/// 
+/// @dev Security Benefits:
+/// - Reduces risk of compromising the deployer wallet
+/// - Allows delegation of specific functions to different admin addresses
+/// - Provides granular control over different aspects of the contract
+/// - Enables multi-signature or DAO governance for critical functions
 
 
 
-contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
-    constructor() Ownable(msg.sender) {}
-
-
+contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    /// @notice Role definitions
+    bytes32 public constant SUPER_ADMIN_ROLE = keccak256("SUPER_ADMIN_ROLE");
+    bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
+    bytes32 public constant WITHDRAWAL_ROLE = keccak256("WITHDRAWAL_ROLE");
+
+    constructor() AccessControl() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(SUPER_ADMIN_ROLE, msg.sender);
+    }
+
+    /// @notice Override supportsInterface to handle multiple inheritance
+    /// @param interfaceId The interface ID to check
+    /// @return bool True if the interface is supported
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC6909) returns (bool) {
+        return AccessControl.supportsInterface(interfaceId) || ERC6909.supportsInterface(interfaceId);
+    }
+
+
+    
 
 
     /// @notice Emitted when the yield token is set
@@ -60,7 +88,7 @@ contract FleetOrderYield is ERC6909, Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
-    function setYieldToken(address _yieldToken) external onlyOwner {
+    function setYieldToken(address _yieldToken) external onlyRole(SUPER_ADMIN_ROLE) {
         if (_yieldToken == address(0)) revert InvalidTokenAddress();
         if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
 
