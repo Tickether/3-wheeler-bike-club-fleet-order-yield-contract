@@ -107,13 +107,12 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
     /// @notice Pay fee in ERC20.
     /// @param erc20Contract The address of the ERC20 contract.
-    function payFleetWeeklyInstallmentERC20( address erc20Contract) internal {
+    function payERC20( address erc20Contract, uint256 amount) internal {
         IERC20 tokenContract = IERC20(erc20Contract);
         uint256 decimals = IERC20Metadata(erc20Contract).decimals();
         
-        uint256 amount = 1 * (10 ** decimals);
-        if (tokenContract.balanceOf(msg.sender) < amount) revert NotEnoughTokens();
-        tokenContract.safeTransferFrom(msg.sender, address(this), amount);
+        if (tokenContract.balanceOf(msg.sender) < amount * (10 ** decimals)) revert NotEnoughTokens();
+        tokenContract.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
     }
 
 

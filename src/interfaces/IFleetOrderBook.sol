@@ -50,10 +50,10 @@ interface IFleetOrderBook {
     function getFleetOwners(uint256 id) external view returns (address[] memory);
 
     /// @notice Check if a fleet order is fractioned
-    function fleetFractioned(uint256 id) external view returns (bool);
+    function getFleetFractioned(uint256 id) external view returns (bool);
 
     /// @notice Get the total fractions of a fleet order
-    function totalFractions(uint256 id) external view returns (uint256);
+    function totalSupply(uint256 id) external view returns (uint256);
 
     /// @notice Get the current status of a fleet order as a string
     function getFleetOrderStatus(uint256 id) external view returns (string memory);
