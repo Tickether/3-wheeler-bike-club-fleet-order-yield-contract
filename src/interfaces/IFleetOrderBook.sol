@@ -52,6 +52,15 @@ interface IFleetOrderBook {
     /// @notice Check if a fleet order is fractioned
     function getFleetFractioned(uint256 id) external view returns (bool);
 
+    /// @notice Get the initial value per order of a fleet order
+    function getFleetInitialValuePerOrder(address id) external view returns (uint256);
+
+    /// @notice Get the expected value per order of a fleet order
+    function getFleetExpectedValuePerOrder(address id) external view returns (uint256);
+
+    /// @notice Get the lock period per order of a fleet order
+    function getFleetLockPeriodPerOrder(address id) external view returns (uint256);
+
     /// @notice Get the total fractions of a fleet order
     function totalSupply(uint256 id) external view returns (uint256);
 
