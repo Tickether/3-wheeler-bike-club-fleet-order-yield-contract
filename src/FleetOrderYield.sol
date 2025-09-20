@@ -4,10 +4,6 @@ pragma solidity ^0.8.13;
 /// @dev Interface imports
 import { IFleetOrderBook } from "./interfaces/IFleetOrderBook.sol";
 
-/// @dev Solmate imports
-import { ERC6909 } from "solmate/tokens/ERC6909.sol";
-//import { ERC6909 } from  "https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC6909.sol";
-
 /// @dev OpenZeppelin utils imports
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -37,7 +33,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 
 
-contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
+contract FleetOrderYield is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Role definitions
@@ -53,8 +49,8 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
     /// @notice Override supportsInterface to handle multiple inheritance
     /// @param interfaceId The interface ID to check
     /// @return bool True if the interface is supported
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC6909) returns (bool) {
-        return AccessControl.supportsInterface(interfaceId) || ERC6909.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl) returns (bool) {
+        return AccessControl.supportsInterface(interfaceId);
     }
 
 
@@ -136,6 +132,64 @@ contract FleetOrderYield is ERC6909, AccessControl, ReentrancyGuard {
 
     receive() external payable { revert NoNativeTokenAccepted(); }
     fallback() external payable { revert NoNativeTokenAccepted(); }
+        // =================================================== ADMIN MANAGEMENT ====================================================
+
+    /// @notice Grant compliance role to an address
+    /// @param account The address to grant the compliance role to
+    function grantComplianceRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(COMPLIANCE_ROLE, account);
+    }
+
+    /// @notice Revoke compliance role from an address
+    /// @param account The address to revoke the compliance role from
+    function revokeComplianceRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _revokeRole(COMPLIANCE_ROLE, account);
+    }
+
+    /// @notice Grant withdrawal role to an address
+    /// @param account The address to grant the withdrawal role to
+    function grantWithdrawalRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(WITHDRAWAL_ROLE, account);
+    }
+
+    /// @notice Revoke withdrawal role from an address
+    /// @param account The address to revoke the withdrawal role from
+    function revokeWithdrawalRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _revokeRole(WITHDRAWAL_ROLE, account);
+    }
+
+    /// @notice Grant super admin role to an address
+    /// @param account The address to grant the super admin role to
+    function grantSuperAdminRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(SUPER_ADMIN_ROLE, account);
+    }
+
+    /// @notice Revoke super admin role from an address
+    /// @param account The address to revoke the super admin role from
+    function revokeSuperAdminRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _revokeRole(SUPER_ADMIN_ROLE, account);
+    }
+
+    /// @notice Check if an address has compliance role
+    /// @param account The address to check
+    /// @return bool True if the address has compliance role
+    function isCompliance(address account) external view returns (bool) {
+        return hasRole(COMPLIANCE_ROLE, account);
+    }
+
+    /// @notice Check if an address has withdrawal role
+    /// @param account The address to check
+    /// @return bool True if the address has withdrawal role
+    function isWithdrawal(address account) external view returns (bool) {
+        return hasRole(WITHDRAWAL_ROLE, account);
+    }
+
+    /// @notice Check if an address has super admin role
+    /// @param account The address to check
+    /// @return bool True if the address has super admin role
+    function isSuperAdmin(address account) external view returns (bool) {
+        return hasRole(SUPER_ADMIN_ROLE, account);
+    }
 
 
 
