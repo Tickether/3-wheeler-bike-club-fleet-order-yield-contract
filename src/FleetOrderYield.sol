@@ -58,8 +58,10 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     event YieldTokenSet(address indexed newYieldToken);
     /// @notice Event emitted when the fleet weekly installment is paid
     event FleetWeeklyInstallmentPaid(address indexed payee, uint256 indexed id, uint256 indexed installment, uint256 amount);
+    /// @notice Event emitted when the fleet owner shares dividend is distributed
+    event FleetOwnerSharesDividend(uint256 indexed id, address indexed fleetOwner, uint256 amount);
     /// @notice Event emitted when the fleet owners yield is distributed
-    event FleetOwnersYieldDistributed(uint256 indexed installment, uint256 indexed id, uint256 amount);
+    event FleetOwnersYieldDistributed(uint256 indexed installment, uint256 indexed id, address[] indexed fleetOwners, uint256 amount);
     /// @notice Event emitted when fleet sales are withdrawn.
     event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
     /// @notice Event emitted when the fleet management service fee wallet is set
@@ -92,10 +94,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         return AccessControl.supportsInterface(interfaceId);
     }
 
-    
-    
-
-   
 
     /// @notice Set the yield token for the fleet order yield contract.
     /// @param _yieldToken The address of the yield token.
@@ -107,6 +105,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         emit YieldTokenSet(_yieldToken);
     }
 
+
     /// @notice Set the fleet management service fee wallet for the fleet order yield contract.
     /// @param _fleetManagementServiceFeeWallet The address of the fleet management service fee wallet.
     function setFleetManagementServiceFeeWallet(address _fleetManagementServiceFeeWallet) external onlyRole(SUPER_ADMIN_ROLE) {
@@ -114,7 +113,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         fleetManagementServiceFeeWallet = _fleetManagementServiceFeeWallet;
         emit FleetManagementServiceFeeWalletSet(_fleetManagementServiceFeeWallet);
     }
-
 
 
     /// @notice Pay fee in ERC20.
@@ -128,8 +126,20 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     }
 
 
-    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal  {
-
+    /// @notice Distribute the fleet owners yield to the fleet owners
+    /// @param amount The amount of yield to share among the fleet owners
+    /// @param id The id of the fleet order
+    /// @return fleetOwners The addresses of the fleet owners
+    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal returns (address[] memory) {
+        address[] memory fleetOwners = fleetOrderBookContract.getFleetOwners(id);
+        uint256 amountPerFraction = amount / fleetOrderBookContract.MAX_FLEET_FRACTION();
+        for (uint256 i = 0; i < fleetOwners.length; i++) {
+            uint256 shares = fleetOrderBookContract.totalSupply(id);
+            uint256 amountPerOwner = shares * amountPerFraction;
+            yieldToken.safeTransfer(fleetOwners[i], amountPerOwner);
+            emit FleetOwnerSharesDividend(id, fleetOwners[i], amountPerOwner);
+        }
+        return fleetOwners;
     }
 
     /// @notice Pay the fleet weekly installment for a given id
@@ -149,9 +159,9 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
         // pay fleet owners
         uint256 fleetOwnersAmount = fleetOrderBookContract.getFleetLiquidityProviderExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
-        distributeFleetOwnersYield( fleetOwnersAmount, id);
+        address[] memory fleetOwners = distributeFleetOwnersYield( fleetOwnersAmount, id);
 
-        emit FleetOwnersYieldDistributed(fleetPaymentsCompleted[id], id, installmentAmount);
+        emit FleetOwnersYieldDistributed(fleetPaymentsCompleted[id], id, fleetOwners, installmentAmount);
     }
 
 

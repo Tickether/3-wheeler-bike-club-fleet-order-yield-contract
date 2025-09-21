@@ -7,7 +7,9 @@ pragma solidity ^0.8.13;
 
 interface IFleetOrderBook {
 
-    
+    /// @notice Get the maximum number of fractions per fleet order
+    function MAX_FLEET_FRACTION() external view returns (uint256);
+
     /// @notice Get the total number of fleet orders
     function totalFleet() external view returns (uint256);
 
