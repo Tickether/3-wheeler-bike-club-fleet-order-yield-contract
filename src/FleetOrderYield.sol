@@ -61,7 +61,10 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @notice Event emitted when the fleet management service fee wallet is set
     event FleetManagementServiceFeeWalletSet(address indexed newFleetManagementServiceFeeWallet);
 
-
+    /// @notice Thrown when the id is Zero
+    error InvalidId();
+    /// @notice Thrown when the id does not exist
+    error IdDoesNotExist();
     /// @notice Thrown when the token address is invalid
     error InvalidAddress();
     /// @notice Thrown when the token address is already set
@@ -70,6 +73,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     error NotEnoughTokens();
     /// @notice Thrown when the native token is not accepted
     error NoNativeTokenAccepted();
+    /// @notice Thrown when the amount is invalid
+    error PaidFullAmount();
 
     constructor() AccessControl() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -109,21 +114,29 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
 
     /// @notice Pay fee in ERC20.
-    /// @param erc20Contract The address of the ERC20 contract.
-    function payERC20( address erc20Contract, uint256 amount) internal {
-        IERC20 tokenContract = IERC20(erc20Contract);
-        uint256 decimals = IERC20Metadata(erc20Contract).decimals();
+    /// @param amount The address of the ERC20 contract.
+    function payERC20(uint256 amount) internal {
+        //IERC20 tokenContract = IERC20(erc20Contract);
+        uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
         
-        if (tokenContract.balanceOf(msg.sender) < amount * (10 ** decimals)) revert NotEnoughTokens();
-        tokenContract.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
+        if (yieldToken.balanceOf(msg.sender) < amount * (10 ** decimals)) revert NotEnoughTokens();
+        yieldToken.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
     }
 
-    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal {}
+    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal {
 
-    function payFleetWeeklyInstallment(uint256 amount, uint256 id) external nonReentrant {
+    }
+
+    function payFleetWeeklyInstallment(uint256 id) external nonReentrant {
+        if (id == 0) revert InvalidId();
+        if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
+        if ( fleetPaymentsCompleted[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
         // pay erc20 from drivers
+        uint256 instalmentAmount = fleetOrderBookContract.getFleetExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
+        payERC20( instalmentAmount );
 
         // pay fleet owners
+        
     }
 
 
