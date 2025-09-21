@@ -41,21 +41,18 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
     bytes32 public constant WITHDRAWAL_ROLE = keccak256("WITHDRAWAL_ROLE");
 
-    constructor() AccessControl() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(SUPER_ADMIN_ROLE, msg.sender);
-    }
-
-    /// @notice Override supportsInterface to handle multiple inheritance
-    /// @param interfaceId The interface ID to check
-    /// @return bool True if the interface is supported
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl) returns (bool) {
-        return AccessControl.supportsInterface(interfaceId);
-    }
-
-
     
 
+    /// @notice The fleet order book contract
+    IFleetOrderBook public fleetOrderBookContract;
+    /// @notice The yield token for the fleet order yield contract.
+    IERC20 public yieldToken;
+    /// @notice The fleet management service fee wallet for the fleet order yield contract.
+    address public fleetManagementServiceFeeWallet;
+
+
+    /// @notice Mapping to store the price and inital value of each 3-wheeler fleet order
+    mapping(uint256 => uint256) private fleetPaymentsCompleted;
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
@@ -72,15 +69,21 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
     /// @notice Thrown when the native token is not accepted
-     error NoNativeTokenAccepted();
+    error NoNativeTokenAccepted();
 
+    constructor() AccessControl() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(SUPER_ADMIN_ROLE, msg.sender);
+    }
 
-    /// @notice The fleet order book contract
-    IFleetOrderBook public fleetOrderBookContract;
-    /// @notice The yield token for the fleet order yield contract.
-    IERC20 public yieldToken;
-    /// @notice The fleet management service fee wallet for the fleet order yield contract.
-    address public fleetManagementServiceFeeWallet;
+    /// @notice Override supportsInterface to handle multiple inheritance
+    /// @param interfaceId The interface ID to check
+    /// @return bool True if the interface is supported
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl) returns (bool) {
+        return AccessControl.supportsInterface(interfaceId);
+    }
+
+    
     
 
    
