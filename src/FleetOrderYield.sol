@@ -56,6 +56,10 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
+    /// @notice Event emitted when the fleet weekly installment is paid
+    event FleetWeeklyInstallmentPaid(address indexed payee, uint256 indexed id, uint256 indexed installment, uint256 amount);
+    /// @notice Event emitted when the fleet owners yield is distributed
+    event FleetOwnersYieldDistributed(uint256 indexed installment, uint256 indexed id, uint256 amount);
     /// @notice Event emitted when fleet sales are withdrawn.
     event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
     /// @notice Event emitted when the fleet management service fee wallet is set
@@ -123,23 +127,31 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         yieldToken.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
     }
 
-    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal {
+
+    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal  {
 
     }
 
-    function payFleetWeeklyInstallment(uint256 id) external nonReentrant {
+    /// @notice Pay the fleet weekly installment for a given id
+    /// @param id The id of the fleet order
+    /// @param payer The address of the driver the installment is made on behalf of
+    function payFleetWeeklyInstallment(uint256 id, address payer) external nonReentrant {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if ( fleetPaymentsCompleted[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
         // pay erc20 from drivers
-        uint256 instalmentAmount = fleetOrderBookContract.getFleetProtocolExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
-        payERC20( instalmentAmount );
+        uint256 installmentAmount = fleetOrderBookContract.getFleetProtocolExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
+        payERC20( installmentAmount );
         fleetPaymentsCompleted[id]++;
+
+        emit FleetWeeklyInstallmentPaid(payer, id, fleetPaymentsCompleted[id], installmentAmount);
+
 
         // pay fleet owners
         uint256 fleetOwnersAmount = fleetOrderBookContract.getFleetLiquidityProviderExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
         distributeFleetOwnersYield( fleetOwnersAmount, id);
 
+        emit FleetOwnersYieldDistributed(fleetPaymentsCompleted[id], id, installmentAmount);
     }
 
 
