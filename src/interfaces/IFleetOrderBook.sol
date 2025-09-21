@@ -20,8 +20,11 @@ interface IFleetOrderBook {
     /// @notice Get the initial value per order of a fleet order
     function getFleetInitialValuePerOrder(uint256 id) external view returns (uint256);
 
-    /// @notice Get the expected value per order of a fleet order
-    function getFleetExpectedValuePerOrder(uint256 id) external view returns (uint256);
+    /// @notice Get the expected protocol value per order of a fleet order
+    function getFleetProtocolExpectedValuePerOrder(uint256 id) external view returns (uint256);
+
+    // @notice Get the expected liquidity provider value per order of a fleet order
+    function getFleetLiquidityProviderExpectedValuePerOrder(uint256 id) external view returns (uint256);
 
     /// @notice Get the lock period per order of a fleet order
     function getFleetLockPeriodPerOrder(uint256 id) external view returns (uint256);

@@ -132,11 +132,14 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if ( fleetPaymentsCompleted[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
         // pay erc20 from drivers
-        uint256 instalmentAmount = fleetOrderBookContract.getFleetExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
+        uint256 instalmentAmount = fleetOrderBookContract.getFleetProtocolExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
         payERC20( instalmentAmount );
+        fleetPaymentsCompleted[id]++;
 
         // pay fleet owners
-        
+        uint256 fleetOwnersAmount = fleetOrderBookContract.getFleetLiquidityProviderExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
+        distributeFleetOwnersYield( fleetOwnersAmount, id);
+
     }
 
 
@@ -155,7 +158,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
     receive() external payable { revert NoNativeTokenAccepted(); }
     fallback() external payable { revert NoNativeTokenAccepted(); }
-        // =================================================== ADMIN MANAGEMENT ====================================================
+    
+    // =================================================== ADMIN MANAGEMENT ====================================================
 
     /// @notice Grant compliance role to an address
     /// @param account The address to grant the compliance role to
