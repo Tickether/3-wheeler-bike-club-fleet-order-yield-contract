@@ -118,11 +118,19 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         tokenContract.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
     }
 
+    function distributeFleetOwnersYield(uint256 amount, uint256 id) internal {}
+
+    function payFleetWeeklyInstallment(uint256 amount, uint256 id) external nonReentrant {
+        // pay erc20 from drivers
+
+        // pay fleet owners
+    }
+
 
     /// @notice Withdraw sales from fleet order book.
     /// @param token The address of the ERC20 contract.
     /// @param to The address to send the sales to.
-    function withdrawFleetManagementServiceFee(address token, address to) external nonReentrant {
+    function withdrawFleetManagementServiceFee(address token, address to) external nonReentrant onlyRole(WITHDRAWAL_ROLE){
         if (token == address(0)) revert InvalidAddress();
         IERC20 tokenContract = IERC20(token);
         uint256 amount = tokenContract.balanceOf(address(this));
