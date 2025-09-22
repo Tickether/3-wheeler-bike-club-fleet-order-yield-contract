@@ -52,7 +52,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
 
     /// @notice Mapping to store the price and inital value of each 3-wheeler fleet order
-    mapping(uint256 => uint256) private fleetPaymentsCompleted;
+    mapping(uint256 => uint256) private fleetPaymentsDistributed;
 
     /// @notice Emitted when the yield token is set
     event YieldTokenSet(address indexed newYieldToken);
@@ -148,22 +148,31 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     function payFleetWeeklyInstallment(uint256 id, address payer) external nonReentrant {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
-        if ( fleetPaymentsCompleted[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
+        if ( fleetPaymentsDistributed[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
         // pay erc20 from drivers
         uint256 installmentAmount = fleetOrderBookContract.getFleetProtocolExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
         payERC20( installmentAmount );
-        fleetPaymentsCompleted[id]++;
+        fleetPaymentsDistributed[id]++;
 
-        emit FleetWeeklyInstallmentPaid(payer, id, fleetPaymentsCompleted[id], installmentAmount);
+        emit FleetWeeklyInstallmentPaid(payer, id, fleetPaymentsDistributed[id], installmentAmount);
 
 
         // pay fleet owners
         uint256 fleetOwnersAmount = fleetOrderBookContract.getFleetLiquidityProviderExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
         address[] memory fleetOwners = distributeFleetOwnersYield( fleetOwnersAmount, id);
 
-        emit FleetOwnersYieldDistributed(fleetPaymentsCompleted[id], id, fleetOwners, installmentAmount);
+        emit FleetOwnersYieldDistributed(fleetPaymentsDistributed[id], id, fleetOwners, installmentAmount);
     }
 
+
+    /// @notice Get the total payments distributed to a fleet order
+    /// @param id The id of the fleet order
+    /// @return uint256 The total payments distributed to the fleet order
+    function getFleetPaymentsDistributed(uint256 id) external view returns (uint256) {
+        if (id == 0) revert InvalidId();
+        if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
+        return fleetPaymentsDistributed[id];
+    }
 
     /// @notice Withdraw sales from fleet order book.
     /// @param token The address of the ERC20 contract.
