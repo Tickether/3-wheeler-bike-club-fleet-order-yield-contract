@@ -54,8 +54,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @notice Mapping to store the price and inital value of each 3-wheeler fleet order
     mapping(uint256 => uint256) private fleetPaymentsDistributed;
 
-    /// @notice Emitted when the yield token is set
-    event YieldTokenSet(address indexed newYieldToken);
     /// @notice Event emitted when the fleet weekly installment is paid
     event FleetWeeklyInstallmentPaid(address indexed payee, uint256 indexed id, uint256 indexed installment, uint256 amount);
     /// @notice Event emitted when the fleet owner shares dividend is distributed
@@ -64,8 +62,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     event FleetOwnersYieldDistributed(uint256 indexed installment, uint256 indexed id, address[] indexed fleetOwners, uint256 amount);
     /// @notice Event emitted when fleet sales are withdrawn.
     event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
-    /// @notice Event emitted when the fleet management service fee wallet is set
-    event FleetManagementServiceFeeWalletSet(address indexed newFleetManagementServiceFeeWallet);
+
 
     /// @notice Thrown when the id is Zero
     error InvalidId();
@@ -82,10 +79,12 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @notice Thrown when the amount is invalid
     error PaidFullAmount();
 
+
     constructor() AccessControl() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(SUPER_ADMIN_ROLE, msg.sender);
     }
+
 
     /// @notice Override supportsInterface to handle multiple inheritance
     /// @param interfaceId The interface ID to check
@@ -102,7 +101,14 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         if (_yieldToken == address(yieldToken)) revert TokenAlreadySet();
 
         yieldToken = IERC20(_yieldToken);
-        emit YieldTokenSet(_yieldToken);
+    }
+
+
+    /// @notice Set the fleet order book contract for the fleet order yield contract.
+    /// @param _fleetOrderBookContract The address of the fleet order book contract.
+    function setFleetOrderBookContract(address _fleetOrderBookContract) external onlyRole(SUPER_ADMIN_ROLE) {
+        if (_fleetOrderBookContract == address(0)) revert InvalidAddress();
+        fleetOrderBookContract = IFleetOrderBook(_fleetOrderBookContract);
     }
 
 
@@ -111,7 +117,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     function setFleetManagementServiceFeeWallet(address _fleetManagementServiceFeeWallet) external onlyRole(SUPER_ADMIN_ROLE) {
        if (_fleetManagementServiceFeeWallet == address(0)) revert InvalidAddress();
         fleetManagementServiceFeeWallet = _fleetManagementServiceFeeWallet;
-        emit FleetManagementServiceFeeWalletSet(_fleetManagementServiceFeeWallet);
     }
 
 
