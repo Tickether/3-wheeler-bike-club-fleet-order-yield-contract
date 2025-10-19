@@ -6,12 +6,24 @@ pragma solidity ^0.8.13;
 /// @author Geeloko
 
 interface IFleetOrderBook {
-
+///getters
     /// @notice Get the maximum number of fractions per fleet order
     function MAX_FLEET_FRACTION() external view returns (uint256);
 
+    /// @notice Get the last fleet fraction ID
+    function lastFleetFractionID() external view returns (uint256);
+
     /// @notice Get the total number of fleet orders
     function totalFleet() external view returns (uint256);
+
+    /// @notice Get the total number of fleet orders
+    function totalFleetContainerOrder() external view returns (uint256);
+
+    /// @notice Get the total number of fleet orders
+    function maxFleetOrderPerContainer() external view returns (uint256);
+
+    /// @notice Get the total number of fleet orders
+    function totalFleetOrderPerContainer() external view returns (uint256);
 
      /// @notice Get the owners of a fleet order
     function getFleetOwners(uint256 id) external view returns (address[] memory);
@@ -31,9 +43,17 @@ interface IFleetOrderBook {
     /// @notice Get the lock period per order of a fleet order
     function getFleetLockPeriodPerOrder(uint256 id) external view returns (uint256);
 
+    /// @notice Get the total number of fleet orders per container
+    function getTotalFleetPerContainer(uint256 id) external view returns (uint256);
+
     /// @notice Get the total fractions of a fleet order
     function totalSupply(uint256 id) external view returns (uint256);
 
     /// @notice Get the current status of a fleet order as a string
     function getFleetOrderStatus(uint256 id) external view returns (string memory);
+
+
+///setters
+    /// @notice Start the next container
+    function startNextContainer() external;
 }
