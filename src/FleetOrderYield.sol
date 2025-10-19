@@ -186,8 +186,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         //IERC20 tokenContract = IERC20(erc20Contract);
         uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
         
-        if (yieldToken.balanceOf(msg.sender) < amount * (10 ** decimals)) revert NotEnoughTokens();
-        yieldToken.safeTransferFrom(msg.sender, address(this), amount * (10 ** decimals));
+        if (yieldToken.balanceOf(msg.sender) < ((amount * (10 ** decimals)) / 1e6)) revert NotEnoughTokens();
+        yieldToken.safeTransferFrom(msg.sender, address(this), ((amount * (10 ** decimals)) / 1e6));
     }
 
 
@@ -197,7 +197,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @return fleetOwners The addresses of the fleet owners
     function distributeFleetOwnersYield(uint256 amount, uint256 id) internal returns (address[] memory) {
         address[] memory fleetOwners = fleetOrderBookContract.getFleetOwners(id);
-        uint256 amountPerFraction = amount / fleetOrderBookContract.MAX_FLEET_FRACTION();
+        uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
+        uint256 amountPerFraction = ((amount * (10 ** decimals)) / 1e6) / fleetOrderBookContract.MAX_FLEET_FRACTION();
         for (uint256 i = 0; i < fleetOwners.length; i++) {
             uint256 shares = fleetOrderBookContract.totalSupply(id);
             uint256 amountPerOwner = shares * amountPerFraction;
