@@ -50,6 +50,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     /// @notice The fleet management service fee wallet for the fleet order yield contract.
     address public fleetManagementServiceFeeWallet;
 
+    /// @notice Whether an operator is compliant.
+    mapping(address => bool) public isOperatorCompliant;
 
     /// @notice State constants - each state is a power of 2 (bit position)
     uint256 constant SHIPPED = 1 << 0;      // 000001
@@ -104,6 +106,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     error InvalidAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
+    /// @notice Thrown when the operator is not compliant
+    error NotCompliant();
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
     /// @notice Thrown when the native token is not accepted
@@ -116,6 +120,8 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     error InvalidAmount();
     /// @notice Thrown when the operator is already assigned
     error OperatorAlreadyAssigned();
+    /// @notice Thrown when the operator is not assigned
+    error OperatorNotAssigned();
     /// @notice Thrown when the state transition is invalid
     error InvalidStateTransition();
     /// @notice Thrown when the ids are duplicate
@@ -215,6 +221,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     function payFleetWeeklyInstallment(uint256 id, address payer) external nonReentrant {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
+        if (fleetOrderStatus[id] != ASSIGNED) revert OperatorNotAssigned();
         if ( fleetPaymentsDistributed[id] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(id)) revert PaidFullAmount();
         // pay erc20 from drivers
         uint256 installmentAmount = fleetOrderBookContract.getFleetProtocolExpectedValuePerOrder(id) / fleetOrderBookContract.getFleetLockPeriodPerOrder(id);
@@ -464,6 +471,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if (operator == address(0)) revert InvalidAddress();
+        if (!isOperatorCompliant[operator]) revert NotCompliant();
         if (fleetOrderStatus[id] != REGISTERED) revert InvalidStatus();
         if (isAddressFleetOperator(operator, id)) revert OperatorAlreadyAssigned();
         addFleetOperator(operator, id);
@@ -471,15 +479,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         setFleetOrderStatus(id, ASSIGNED);
     }
 
-
-    /// @notice Get the fleet order status of a fleet order.
-    /// @param id The id of the fleet order.
-    /// @return The fleet order status of the fleet order.
-    function getFleetOrderStatus(uint256 id) external view returns (uint256) {
-        if (id == 0) revert InvalidId();
-        if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
-        return fleetOrderStatus[id];
-    }
 
 
     /// @notice Get the current status of a fleet order
