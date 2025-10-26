@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 /// @dev Interface imports
 import { IFleetOrderBook } from "./interfaces/IFleetOrderBook.sol";
+import { IFleetOperatorBook } from "./interfaces/IFleetOperatorBook.sol";
 
 /// @dev OpenZeppelin utils imports
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -45,13 +46,14 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
     /// @notice The fleet order book contract
     IFleetOrderBook public fleetOrderBookContract;
+    /// @notice The fleet operator book contract
+    IFleetOperatorBook public fleetOperatorBookContract;
     /// @notice The yield token for the fleet order yield contract.
     IERC20 public yieldToken;
     /// @notice The fleet management service fee wallet for the fleet order yield contract.
     address public fleetManagementServiceFeeWallet;
 
-    /// @notice Whether an operator is compliant.
-    mapping(address => bool) public isOperatorCompliant;
+
 
     /// @notice State constants - each state is a power of 2 (bit position)
     uint256 constant SHIPPED = 1 << 0;      // 000001
@@ -96,6 +98,9 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     event FleetOwnersYieldDistributed(uint256 indexed installment, uint256 indexed id, address[] indexed fleetOwners, uint256 amount);
     /// @notice Event emitted when fleet sales are withdrawn.
     event FleetManagementServiceFeeWithdrawn(address indexed token, address indexed to, uint256 amount);
+    /// @notice Event emitted when a fleet operator is assigned
+    event FleetOperatorAssigned(address indexed operator, uint256 indexed id);
+
 
 
     /// @notice Thrown when the id is Zero
@@ -106,8 +111,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     error InvalidAddress();
     /// @notice Thrown when the token address is already set
     error TokenAlreadySet();
-    /// @notice Thrown when the operator is not compliant
-    error NotCompliant();
     /// @notice Thrown when the user does not have enough tokens
     error NotEnoughTokens();
     /// @notice Thrown when the native token is not accepted
@@ -187,7 +190,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
 
     /// @notice Pay fee in ERC20.
-    /// @param amount The address of the ERC20 contract.
+    /// @param amount The amount of the ERC20 to pay in USD with 6 decimals.
     function payERC20(uint256 amount) internal {
         //IERC20 tokenContract = IERC20(erc20Contract);
         uint256 decimals = IERC20Metadata(address(yieldToken)).decimals();
@@ -466,17 +469,16 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
 
     /// @notice Assign a fleet operator to a fleet order.
     /// @param id The id of the fleet order.
-    /// @param operator The address of the operator.
-    function assignFleetOperator(uint256 id, address operator) external onlyRole(SUPER_ADMIN_ROLE) {
+    function assignFleetOperator(uint256 id ) external onlyRole(SUPER_ADMIN_ROLE) {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
-        if (operator == address(0)) revert InvalidAddress();
-        if (!isOperatorCompliant[operator]) revert NotCompliant();
         if (fleetOrderStatus[id] != REGISTERED) revert InvalidStatus();
+        address operator = fleetOperatorBookContract.getNextFleetOperatorReservation();
         if (isAddressFleetOperator(operator, id)) revert OperatorAlreadyAssigned();
         addFleetOperator(operator, id);
         addFleetOperated(operator, id);
         setFleetOrderStatus(id, ASSIGNED);
+        emit FleetOperatorAssigned(operator, id);
     }
 
 
