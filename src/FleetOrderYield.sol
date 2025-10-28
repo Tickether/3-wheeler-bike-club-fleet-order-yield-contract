@@ -165,6 +165,14 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     }
 
 
+    /// @notice Set the fleet operator book contract for the fleet order yield contract.
+    /// @param _fleetOperatorBookContract The address of the fleet operator book contract.
+    function setFleetOperatorBookContract(address _fleetOperatorBookContract) external onlyRole(SUPER_ADMIN_ROLE) {
+        if (_fleetOperatorBookContract == address(0)) revert InvalidAddress();
+        fleetOperatorBookContract = IFleetOperatorBook(_fleetOperatorBookContract);
+    }
+
+
     /// @notice Set the fleet management service fee wallet for the fleet order yield contract.
     /// @param _fleetManagementServiceFeeWallet The address of the fleet management service fee wallet.
     function setFleetManagementServiceFeeWallet(address _fleetManagementServiceFeeWallet) external onlyRole(SUPER_ADMIN_ROLE) {
