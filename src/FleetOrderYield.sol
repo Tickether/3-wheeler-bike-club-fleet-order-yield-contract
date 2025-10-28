@@ -121,8 +121,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
     error InvalidStatus();
     /// @notice Thrown when the amount is invalid
     error InvalidAmount();
-    /// @notice Thrown when the operator is already assigned
-    error OperatorAlreadyAssigned();
     /// @notice Thrown when the operator is not assigned
     error OperatorNotAssigned();
     /// @notice Thrown when the state transition is invalid
@@ -474,7 +472,6 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if (fleetOrderStatus[id] != REGISTERED) revert InvalidStatus();
         address operator = fleetOperatorBookContract.getNextFleetOperatorReservation();
-        if (isAddressFleetOperator(operator, id)) revert OperatorAlreadyAssigned();
         addFleetOperator(operator, id);
         addFleetOperated(operator, id);
         setFleetOrderStatus(id, ASSIGNED);
