@@ -472,10 +472,19 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         setFleetLicensePlateNumberPerOrder(licensePlateNumber, id);
     }
 
+    /// @notice Check if a fleet operator is available to be assigned a new fleet.
+    /// @param operator The address of the operator to check.
+    /// @return bool True if the operator is available to be assigned a new fleet.
+    function isFleetOperatorAvailable(address operator) external view returns (bool) {
+        // operator can only be assigned a new fleet if not assigned any 
+        // ...or most recent fleet is paid in full
+        return fleetOperated[operator].length == 0 || fleetPaymentsDistributed[fleetOperated[operator][fleetOperated[operator].length - 1]] >= fleetOrderBookContract.getFleetLockPeriodPerOrder(fleetOperated[operator][fleetOperated[operator].length - 1]);
+    }
+
 
     /// @notice Assign a fleet operator to a fleet order.
     /// @param id The id of the fleet order.
-    function assignFleetOperator(uint256 id ) external onlyRole(SUPER_ADMIN_ROLE) {
+    function assignFleetOperator(uint256 id) external onlyRole(SUPER_ADMIN_ROLE) {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if (fleetOrderStatus[id] != REGISTERED) revert InvalidStatus();
