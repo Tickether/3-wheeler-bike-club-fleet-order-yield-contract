@@ -488,7 +488,7 @@ contract FleetOrderYield is AccessControl, ReentrancyGuard {
         if (id == 0) revert InvalidId();
         if (id > fleetOrderBookContract.totalFleet()) revert IdDoesNotExist();
         if (fleetOrderStatus[id] != REGISTERED) revert InvalidStatus();
-        address operator = fleetOperatorBookContract.getNextFleetOperatorReservation();
+        address operator = fleetOperatorBookContract.assignNextFleetOperatorReservation();
         addFleetOperator(operator, id);
         addFleetOperated(operator, id);
         setFleetOrderStatus(id, ASSIGNED);

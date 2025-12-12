@@ -7,5 +7,5 @@ pragma solidity ^0.8.13;
 
 interface IFleetOperatorBook {
     /// @notice Get the next fleet operator reservation
-    function getNextFleetOperatorReservation() external returns (address);
+    function assignNextFleetOperatorReservation() external returns (address);
 }
